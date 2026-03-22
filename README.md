@@ -1,3 +1,6 @@
+An interactive bike encyclopedia with a 3D hologram viewer, built with React, Three.js, and Supabase.
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
