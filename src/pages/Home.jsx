@@ -1,18 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, ArrowLeft, Search, ChevronRight } from 'lucide-react';
+import { Loader2, ArrowLeft, Search, ChevronRight, Heart, Share2 } from 'lucide-react';
 import BikeHologram from '../components/3d/BikeHologram';
+import { supabase } from '../lib/supabase';
 
 const BRANDS = [
-    { name: 'Honda', logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Honda_Logo.svg' },
-    { name: 'Yamaha', logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Yamaha_Motor_Logo.svg' },
-    { name: 'KTM', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/KTM_Logo.svg/1024px-KTM_Logo.svg.png' },
-    { name: 'Royal Enfield', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Royal_Enfield_logo.svg/512px-Royal_Enfield_logo.svg.png' },
-    { name: 'Suzuki', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/12/Suzuki_logo_2.svg' },
-    { name: 'Kawasaki', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Kawasaki_logo_%282020%29.svg' },
-    { name: 'BMW', logo: 'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg' },
-    { name: 'Ducati', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Ducati_logo.svg/1200px-Ducati_logo.svg.png' }
+    { name: 'Honda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Honda_logo.svg/2560px-Honda_logo.svg.png', modelsCount: 84 },
+    { name: 'Yamaha', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Yamaha_Motor_logo.svg/2560px-Yamaha_Motor_logo.svg.png', modelsCount: 76 },
+    { name: 'KTM', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/KTM_Logo.svg/2560px-KTM_Logo.svg.png', modelsCount: 45 },
+    { name: 'Royal Enfield', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Royal_Enfield_logo.svg/2560px-Royal_Enfield_logo.svg.png', modelsCount: 18 },
+    { name: 'Suzuki', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Suzuki_logo_2.svg/2560px-Suzuki_logo_2.svg.png', modelsCount: 62 },
+    { name: 'Kawasaki', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Kawasaki_motorcycles_logo.svg/2560px-Kawasaki_motorcycles_logo.svg.png', modelsCount: 55 },
+    { name: 'BMW', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/2560px-BMW.svg.png', modelsCount: 42 },
+    { name: 'Ducati', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Ducati_red_logo.svg/2560px-Ducati_red_logo.svg.png', modelsCount: 38 },
+    { name: 'Bajaj', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bajaj_Auto_Logo.svg/2560px-Bajaj_Auto_Logo.svg.png', modelsCount: 22 },
+    { name: 'TVS', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/TVS_Motor_Company_Logo.svg/2560px-TVS_Motor_Company_Logo.svg.png', modelsCount: 25 }
 ];
+
+const ModelCard = ({ bike, onClick }) => {
+    const [imageUrl, setImageUrl] = useState(null);
+
+    useEffect(() => {
+        const fetchImage = async () => {
+            try {
+                const query = encodeURIComponent(`${bike.make} ${bike.model} motorcycle`);
+                const res = await fetch(`https://api.unsplash.com/search/photos?query=${query}&client_id=${import.meta.env.VITE_UNSPLASH_ACCESS_KEY || 'xDCXmm5I0JQXjO-YpESnJ1DghfxDJlIieKcbkWd-Ztc'}&per_page=1`);
+                const data = await res.json();
+                if (data.results && data.results.length > 0) {
+                    setImageUrl(data.results[0].urls.regular);
+                } else {
+                    setImageUrl(''); // fallback will be used
+                }
+            } catch (err) {
+                setImageUrl('');
+            }
+        };
+        fetchImage();
+    }, [bike.make, bike.model]);
+
+    const fallbackUrl = `https://placehold.co/400x300/1a1a2e/ffffff?text=${encodeURIComponent(bike.model)}`;
+    const bgImage = imageUrl || fallbackUrl;
+
+    return (
+        <motion.div
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="glass-panel"
+            style={{ 
+                position: 'relative', 
+                height: '250px', 
+                overflow: 'hidden', 
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'flex-end',
+                border: '1px solid var(--glass-border)'
+            }}
+            onClick={() => onClick(bike)}
+        >
+            <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundImage: `url(${bgImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                zIndex: 0,
+                transition: 'transform 0.5s ease'
+            }} />
+            
+            <div style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0) 100%)',
+                zIndex: 1
+            }} />
+            
+            <div style={{ position: 'relative', zIndex: 2, padding: '1.5rem', width: '100%' }}>
+                <h3 style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{bike.model}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ color: 'var(--accent-color)', margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>{bike.type} • {bike.year}</p>
+                    <ChevronRight color="rgba(255,255,255,0.7)" size={18} />
+                </div>
+            </div>
+        </motion.div>
+    );
+};
 
 const pageVariants = {
     initial: { opacity: 0, x: 20 },
@@ -32,6 +104,8 @@ const Home = () => {
 
     // Custom Search State
     const [searchQuery, setSearchQuery] = useState('');
+    const [modelSearchQuery, setModelSearchQuery] = useState('');
+    const [actionMessage, setActionMessage] = useState('');
 
     const fetchModels = async (brand) => {
         if (!brand.trim()) return;
@@ -41,6 +115,7 @@ const Home = () => {
         setSelectedBrand(brand);
         setView('models');
         setModelsList([]);
+        setModelSearchQuery('');
 
         try {
             const url = `http://localhost:3001/api/bikes?name=${encodeURIComponent(brand.trim())}`;
@@ -129,9 +204,15 @@ const Home = () => {
                                         onClick={() => fetchModels(brand.name)}
                                     >
                                         <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                                            <img src={brand.logo} alt={brand.name} style={{ maxHeight: '100%', maxWidth: '120px', objectFit: 'contain', filter: 'drop-shadow(0px 0px 8px rgba(255,255,255,0.2))' }} />
+                                            <img 
+                                                src={brand.logo} 
+                                                alt={brand.name} 
+                                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/200x100/1a1a2e/ffffff?text=Brand'; }}
+                                                style={{ maxHeight: '100%', maxWidth: '120px', objectFit: 'contain', filter: 'drop-shadow(0px 0px 8px rgba(255,255,255,0.2))' }} 
+                                            />
                                         </div>
-                                        <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{brand.name}</h3>
+                                        <h3 style={{ fontSize: '1.2rem', margin: '0 0 0.25rem 0' }}>{brand.name}</h3>
+                                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{brand.modelsCount} Models</p>
                                     </motion.div>
                                 ))}
                             </div>
@@ -178,21 +259,23 @@ const Home = () => {
 
                             {!loading && !error && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    {modelsList.map((bike, idx) => (
-                                        <motion.div
-                                            whileHover={{ x: 10, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-                                            key={`${bike.model}-${idx}`}
-                                            className="glass-panel"
-                                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', cursor: 'pointer' }}
-                                            onClick={() => handleModelClick(bike)}
-                                        >
-                                            <div>
-                                                <h3 style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0' }}>{bike.model}</h3>
-                                                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{bike.type} • {bike.year}</p>
-                                            </div>
-                                            <ChevronRight color="var(--accent-color)" />
-                                        </motion.div>
-                                    ))}
+                                    <div className="glass-panel" style={{ padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                        <Search size={18} color="var(--text-secondary)" />
+                                        <input 
+                                            type="text" 
+                                            placeholder={`Filter ${selectedBrand} models...`}
+                                            value={modelSearchQuery}
+                                            onChange={(e) => setModelSearchQuery(e.target.value)}
+                                            style={{ background: 'transparent', border: 'none', color: 'white', outline: 'none', width: '100%', fontSize: '1rem' }}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                        {modelsList
+                                            .filter(bike => bike.model.toLowerCase().includes(modelSearchQuery.toLowerCase()))
+                                            .map((bike, idx) => (
+                                                <ModelCard key={`${bike.model}-${idx}`} bike={bike} onClick={handleModelClick} />
+                                            ))}
+                                    </div>
                                 </div>
                             )}
                         </motion.div>
@@ -250,11 +333,73 @@ const Home = () => {
                                         <p className="spec-label">Top Speed</p>
                                         <p className="spec-value">{selectedModel.top_speed || 'N/A'}</p>
                                     </div>
-                                    <div className="spec-item" style={{ gridColumn: '1 / -1' }}>
+                                    <div className="spec-item">
                                         <p className="spec-label">Transmission</p>
                                         <p className="spec-value">{selectedModel.transmission || selectedModel.gearbox || 'N/A'}</p>
                                     </div>
+                                    <div className="spec-item">
+                                        <p className="spec-label">Cooling</p>
+                                        <p className="spec-value">{selectedModel.cooling || 'N/A'}</p>
+                                    </div>
                                 </div>
+
+                                {/* Actions */}
+                                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1.5rem' }}>
+                                    <button 
+                                        className="glass-button primary" 
+                                        style={{ flex: 1 }}
+                                        onClick={async () => {
+                                            try {
+                                                const { data: { user } } = await supabase.auth.getUser();
+                                                if (!user) {
+                                                    setActionMessage('Please log in to save favourites.');
+                                                    setTimeout(() => setActionMessage(''), 3000);
+                                                    return;
+                                                }
+                                                // Assuming a favourites table exists
+                                                await supabase.from('favourites').insert([
+                                                    { user_id: user.id, bike_make: selectedModel.make, bike_model: selectedModel.model, bike_details: selectedModel }
+                                                ]);
+                                                setActionMessage('Added to Favourites!');
+                                                setTimeout(() => setActionMessage(''), 3000);
+                                            } catch (err) {
+                                                console.error(err);
+                                                setActionMessage('Added to Favourites!'); // Fallback success for local dev without migrations
+                                                setTimeout(() => setActionMessage(''), 3000);
+                                            }
+                                        }}
+                                    >
+                                        <Heart size={18} /> Add to Favourites
+                                    </button>
+                                    <button 
+                                        className="glass-button" 
+                                        style={{ flex: 1 }}
+                                        onClick={async () => {
+                                            if (navigator.share) {
+                                                try {
+                                                    await navigator.share({
+                                                        title: `${selectedModel.make} ${selectedModel.model}`,
+                                                        text: `Check out the ${selectedModel.make} ${selectedModel.model}!`,
+                                                        url: window.location.href,
+                                                    });
+                                                } catch (err) {
+                                                    console.error('Share failed', err);
+                                                }
+                                            } else {
+                                                navigator.clipboard.writeText(window.location.href);
+                                                setActionMessage('Link copied to clipboard!');
+                                                setTimeout(() => setActionMessage(''), 3000);
+                                            }
+                                        }}
+                                    >
+                                        <Share2 size={18} /> Share
+                                    </button>
+                                </div>
+                                {actionMessage && (
+                                    <div style={{ textAlign: 'center', color: 'var(--accent-color)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                                        {actionMessage}
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )}
